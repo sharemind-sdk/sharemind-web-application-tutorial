@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script type="text/javascript" src="js/ext/socket.io.min.js"></script>
+    <script type="text/javascript" src="js/ext/jsbn.js"></script>
+    <script type="text/javascript" src="js/ext/sharemind-web-client.js"></script>
+    <script>
+        var hosts = [
+            "http://localhost:8081",
+            "http://localhost:8082",
+            "http://localhost:8083"
+        ];
+        var gatewayConnection = null;
+        var pub = sm.types.base;
+        var priv = sm.types.shared3p;
+        var BigInteger = jsbn.BigInteger;
+
+        var data;
+
+        function receiveForm(form) {
+            data = form.option.value;
+            gatewayConnection = new sm.client.GatewayConnection(hosts, null, function(err) {
+                if (err.message) {
+                    console.log("[ERROR] : " + err.message);
+                    console.log(err);
+                } else {
+                    console.log("[ERROR] : " + err);
+                }
+            });
+            gatewayConnection.openConnection(function(err, serverInfos, prngSeed) {
+                if (err) {
+                    console.log("[ERROR] : " + err.message);
+                }
+
+                if (!sm.prng.instance)
+                    sm.prng.init(prngSeed);
+
+                if (!sm.prng.instance) {
+                    console.log("Failed to create PRNG!");
+                }
+
+                console.log("Opened connection");
+
+                var pub_value = new pub.Int32Array(1);
+                pub_value.set(0, new BigInteger('' + data, 10));
+
+                console.log("Made the public value");
+
+                var private_value = new priv.Int32Array(pub_value);
+
+                var args = {};
+                args["id"] = private_value;
+
+                console.log("Starting to run script");
+
+                gatewayConnection.runMpcComputation("test-script", args, function(err, results) {
+                    if (err) {
+                        console.log("[ERROR] : " + err.message);
+                    }
+                    var res = results["hist"];
+                    console.log("Ran script");
+                    document.getElementById("result").innerHTML = "<p> option 1 : " + res.get(0) + ", option 2 : " + res.get(1) + "</p>";
+                });
+
+            });
+        }
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    document.getElementById("location").innerHTML = "Latitude: " + pos.coords.latitude +
+                    "<br>Longitude: " + pos.coords.longitude;
+                });
+            }
+        }
+
+    </script>
+</head>
+
+<body>
+    <div id="ballot-div">
+        <form name="ballot" action="" method="GET">
+            <label><input type="radio" name="option" value="1">Option 1</label>
+            <label><input type="radio" name="option" value="2">Option 2</label>
+            <br>
+            <input type="button" value="Submit" onclick="receiveForm(this.form)">
+        </form>
+    </div>
+    <div id="result">
+    </div>
+    <div id="location">
+        <input type="button" value="getLocation" onclick="getLocation()">
+    </div>
+</body>
+<html>

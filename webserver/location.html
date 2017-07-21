@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script src="js/ext/socket.io.min.js"></script>
+    <script src="js/ext/jsbn.js"></script>
+    <script src="js/ext/sharemind-web-client.js"></script>
+    <script>
+        var hosts = [
+            "http://localhost:8081",
+            "http://localhost:8082",
+            "http://localhost:8083"
+        ];
+        var gatewayConnection = null;
+        var pub = sm.types.base;
+        var priv = sm.types.shared3p;
+        
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation);
+            }
+        }
+
+        function sendLocation(pos) {
+            var longitude = toRadians(parseFloat(pos.coords.longitude));
+            var latitude = toRadians(parseFloat(pos.coords.latitude));
+
+            console.log(longitude);
+            console.log(latitude);
+
+            gatewayConnection = new sm.client.GatewayConnection(hosts, null, null);
+            gatewayConnection.openConnection(function(err, serverInfos, prngSeed) {
+                if (err) {
+                    console.log("[ERROR] : " + err.message);
+                }
+
+                if (!sm.prng.instance)
+                    sm.prng.init(prngSeed);
+
+                if (!sm.prng.instance) {
+                    console.log("Failed to create PRNG!");
+                }
+
+                var pub_value = new pub.Float64Array(2);
+                pub_value.set(0, latitude);
+                pub_value.set(1, longitude);
+
+                var private_value = new priv.Float64Array(pub_value);
+                var args = {};
+
+                args["location"] = private_value;
+                gatewayConnection.runMpcComputation("location-database", args, function(err, result) {
+                    console.log("Ran script");
+                    var res = result["hist"];
+
+                    document.getElementById("out").innerHTML = "<p>" +
+                        "People closer then 500m : " + res.get(0) + "<br>" +
+                        "People closer then 1km : " + res.get(1) + "<br>" +
+                        "People closer then 2km : " + res.get(2) + "<br>" +
+                        "People closer then 5km : " + res.get(3) + "<br>" +
+                        "People further then 5km : " + res.get(4) + "<br>" +
+                        "</p>";
+                })
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="in">
+        <input type="button" value="Send" onclick="getLocation()">
+    </div>
+    <div id="out">
+    </div>
+</body>

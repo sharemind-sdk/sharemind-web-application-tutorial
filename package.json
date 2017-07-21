@@ -1,0 +1,24 @@
+{
+  "name": "web-tutorial",
+  "version": "0.0.1",
+  "description": "A tutorial on how to use Sharemind web client and web gateway",
+  "dependencies": {
+    "jsbn": "1.x.x",
+    "sharemind-web-client": "/home/hendrik/Work/sharemind-web-client",
+    "sharemind-web-gateway": "/home/hendrik/Work/sharemind-web-gateway",
+    "socket.io": "1.x.x",
+    "socket.io-client": "1.x.x"
+  },
+  "devDependencies": {
+    "eslint": "^3.15.0"
+  },
+  "scripts": {
+    "cp:io": "cp node_modules/socket.io-client/dist/socket.io.min.js webserver/js/ext",
+    "cp:jsbn": "cp node_modules/jsbn/index.js webserver/js/ext/jsbn.js",
+    "cp:sm-web-client": "cp node_modules/sharemind-web-client/dist/sharemind-web-client.js webserver/js/ext",
+    "postinstall": "npm run cp:io && npm run cp:jsbn && npm run cp:sm-web-client",
+    "lint": "node_modules/.bin/eslint client/web/js/*.js server/nodejs/*.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true
+}
