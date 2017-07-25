@@ -145,13 +145,8 @@ var otherServerNames = [
 otherServerNames.splice(gatewayNumber-1, 1);
 
 // Specify scripts that clients can run
-// Client requests running computation 'save-vote', upon which the script 'app_save_vote.sb' is run
+// Client requests running computation 'location-database', upon which the script 'location-database.sb' is run
 var scriptsInfoMap = {};
-scriptsInfoMap['test-script'] = {
-  name: 'test-script.sb',
-  type: 'multi', // 'multi' means this script does MPC computations
-  otherServerNames: otherServerNames
-};
 scriptsInfoMap['location-database'] = {
   name: 'location-database.sb',
   type: 'multi', // 'multi' means this script does MPC computations

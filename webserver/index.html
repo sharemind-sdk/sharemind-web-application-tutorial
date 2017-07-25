@@ -2,9 +2,9 @@
 <html>
 
 <head>
-    <script type="text/javascript" src="js/ext/socket.io.min.js"></script>
-    <script type="text/javascript" src="js/ext/jsbn.js"></script>
-    <script type="text/javascript" src="js/ext/sharemind-web-client.js"></script>
+    <script src="js/ext/socket.io.min.js"></script>
+    <script src="js/ext/jsbn.js"></script>
+    <script src="js/ext/sharemind-web-client.js"></script>
     <script>
         var hosts = [
             "http://localhost:8081",
@@ -14,82 +14,81 @@
         var gatewayConnection = null;
         var pub = sm.types.base;
         var priv = sm.types.shared3p;
-        var BigInteger = jsbn.BigInteger;
 
-        var data;
+        // function for converting degrees to radians
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
 
-        function receiveForm(form) {
-            data = form.option.value;
-            gatewayConnection = new sm.client.GatewayConnection(hosts, null, function(err) {
-                if (err.message) {
-                    console.log("[ERROR] : " + err.message);
-                    console.log(err);
-                } else {
-                    console.log("[ERROR] : " + err);
-                }
-            });
+        // function that is called when "send" button is pressed
+        // once location data is retrieved, sendLocation is called
+        function getLocation() {
+            // this uses HTML5 navigator api, in Chrome version > 49 https is requiered
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation);
+            }
+        }
+
+        // secret share location data, call secrec script
+        function sendLocation(pos) {
+            var longitude = toRadians(parseFloat(pos.coords.longitude));
+            var latitude = toRadians(parseFloat(pos.coords.latitude));
+
+            // write location data to console
+            console.log(longitude);
+            console.log(latitude);
+
+            // create a new gateway connection
+            gatewayConnection = new sm.client.GatewayConnection(hosts);
+
+            // connect to gateways
+            // once connections are established, secret share the data and run script
             gatewayConnection.openConnection(function(err, serverInfos, prngSeed) {
+                // if an error accures
                 if (err) {
                     console.log("[ERROR] : " + err.message);
                 }
 
-                if (!sm.prng.instance)
-                    sm.prng.init(prngSeed);
-
+                // if a pseudorandom number generator doesn't exist, create one from the seed
                 if (!sm.prng.instance) {
-                    console.log("Failed to create PRNG!");
+                    sm.prng.init(prngSeed);
                 }
 
-                console.log("Opened connection");
+                // create a public float64 array of size two and insert values into it
+                var pub_value = new pub.Float64Array(2);
+                pub_value.set(0, latitude);
+                pub_value.set(1, longitude);
 
-                var pub_value = new pub.Int32Array(1);
-                pub_value.set(0, new BigInteger('' + data, 10));
+                // create a private float64 array from the public array
+                var private_value = new priv.Float64Array(pub_value);
+                var args = {};  // object holding arguments given to the script
 
-                console.log("Made the public value");
+                // insert private value into args, the key string is used in the script to get the value
+                args["location"] = private_value;
 
-                var private_value = new priv.Int32Array(pub_value);
-
-                var args = {};
-                args["id"] = private_value;
-
-                console.log("Starting to run script");
-
-                gatewayConnection.runMpcComputation("test-script", args, function(err, results) {
-                    if (err) {
-                        console.log("[ERROR] : " + err.message);
-                    }
-                    var res = results["hist"];
+                // run script "location-database", after completion retrieve and format the result
+                gatewayConnection.runMpcComputation("location-database", args, function(err, result) {
                     console.log("Ran script");
-                    document.getElementById("result").innerHTML = "<p> option 1 : " + res.get(0) + ", option 2 : " + res.get(1) + "</p>";
-                });
+                    var res = result["hist"];  // the result is a public array of uint64
 
+                    // format the results
+                    document.getElementById("out").innerHTML = "<p>" +
+                        "People closer then 500m : " + res.get(0) + "<br>" +
+                        "People closer then 1km : " + res.get(1) + "<br>" +
+                        "People closer then 2km : " + res.get(2) + "<br>" +
+                        "People closer then 5km : " + res.get(3) + "<br>" +
+                        "People further then 5km : " + res.get(4) + "<br>" +
+                        "</p>";
+                })
             });
         }
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    document.getElementById("location").innerHTML = "Latitude: " + pos.coords.latitude +
-                    "<br>Longitude: " + pos.coords.longitude;
-                });
-            }
-        }
-
     </script>
 </head>
 
 <body>
-    <div id="ballot-div">
-        <form name="ballot" action="" method="GET">
-            <label><input type="radio" name="option" value="1">Option 1</label>
-            <label><input type="radio" name="option" value="2">Option 2</label>
-            <br>
-            <input type="button" value="Submit" onclick="receiveForm(this.form)">
-        </form>
+    <div id="in">
+        <input type="button" value="Send" onclick="getLocation()">
     </div>
-    <div id="result">
-    </div>
-    <div id="location">
-        <input type="button" value="getLocation" onclick="getLocation()">
+    <div id="out">
     </div>
 </body>
-<html>
