@@ -75,7 +75,6 @@ function closeWebGateway(callback) {
         logErr(err, "Error when closing WebGateway object:");
       }
       log("Disconnected from Sharemind and closed WebGateway object.");
-      gateway = null;
       callback();
     });
   } else {
@@ -86,7 +85,6 @@ function closeWebGateway(callback) {
 function stop(rv) {
   closeHttpServer(function() {
     closeWebGateway(function() {
-      assert(!gateway);
       process.exit(rv);
     });
   });
@@ -192,8 +190,7 @@ log('Initializing WebGateway...');
 // Initialize the WebGateway object, read in configuration
 gateway = WebGateway.getInstance(gatewayConfig, log);
 
-log('WebGateway initialized. Got serverInfo from Sharemind: ' + JSON.stringify(gateway.getServerInfo()));
-log('Connecting to Sharemind...');
+log('WebGateway initialized. connecting to Sharemind server with server info: ' + JSON.stringify(gateway.getServerInfo()));
 
 // Connect gateway to Sharemind and start the HTTP server
 gateway.connect(function (err) {
@@ -202,7 +199,7 @@ gateway.connect(function (err) {
     return stop(1);
   }
 
-  log('Connected gateway to Sharemind. Running server...');
+  log('Connected gateway to Sharemind. Running HTTP server...');
   server.listen(gatewayPort, gatewayHostname);
   log('Gateway listening on hostname: \'' + gatewayHostname + '\', port: \'' + gatewayPort + '\'');
 });

@@ -1,10 +1,9 @@
 #!/bin/sh
 set -e
 
-SHAREMIND="/home/hendrik/Work/appserv/bin"
-SCC="/home/hendrik/Work/appserv/bin/scc"
-STDLIB="/home/hendrik/Work/stdlib/lib"
-LD_LIBRARY_PATH="/home/hendrik/Work/appserv/lib"
+SHAREMIND="/PATH/TO/SHAREMIND/bin"
+SCC="/PATH/TO/SHAREMIND/bin/scc"
+STDLIB="/PATH/TO/SECREC/lib"
 
 if [ $# -eq 0 ]; then
     echo "No arguments given."

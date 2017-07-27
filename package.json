@@ -1,5 +1,5 @@
 {
-  "name": "web-tutorial",
+  "name": "sharemind-web-tutorial",
   "version": "0.0.1",
   "description": "A tutorial on how to use Sharemind web client and web gateway",
   "dependencies": {
@@ -17,8 +17,6 @@
     "cp:jsbn": "cp node_modules/jsbn/index.js webserver/js/ext/jsbn.js",
     "cp:sm-web-client": "cp node_modules/sharemind-web-client/dist/sharemind-web-client.js webserver/js/ext",
     "postinstall": "npm run cp:io && npm run cp:jsbn && npm run cp:sm-web-client",
-    "lint": "node_modules/.bin/eslint client/web/js/*.js server/nodejs/*.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true
 }

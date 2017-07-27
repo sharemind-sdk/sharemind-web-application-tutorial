@@ -13,7 +13,7 @@ import stdlib;                      // contains standard functions like publish(
 import table_database;              // for creating table databases
 import shared3p_table_database;     // for inserting and retrieving secret shared values from databases
 
-domain pd_shared3p shared3p;
+domain pd_shared3p shared3p;  // create a protection domain of kind shared3p
 
 
 // cosine function is not declared in the secrec standard library
@@ -51,7 +51,7 @@ void createTable(string datasource, string table) {
         // names: |          "latitude" |         "longitude" |
         // types: | pd_shared3p float64 | pd_shared3p float64 |
         //        ---------------------------------------------
-        //        |    coord in radians |    coord in radians |
+        //  data: |    coord in radians |    coord in radians |
         //        |                   * |                   * |
         //        |                   * |                   * |
         //        |                   * |                   * |
