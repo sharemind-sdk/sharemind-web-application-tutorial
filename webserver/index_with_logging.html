@@ -20,15 +20,30 @@
             return degrees * Math.PI / 180;
         }
 
+        // function to format time
+        function getFormattedDate() {
+            var date = new Date();
+            var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-"
+                + date.getDate() + " " + date.getHours() + ":"
+                + date.getMinutes() + ":" + date.getSeconds();
+
+            return str;
+        }
+
+        // function to print log to the webpage
+        function log(msg) {
+            document.getElementById("log").innerHTML += "<p>" + getFormattedDate() + " : " + msg + "</p>";
+        }
+
         // function that is called when "send" button is pressed
         // once location data is retrieved, sendLocation is called
         function getLocation() {
             // this uses HTML5 navigator api, in Chrome version > 49 https is requiered
             if (navigator.geolocation) {
-                console.log("Getting location data");
+                log("Getting location data");
                 navigator.geolocation.getCurrentPosition(sendLocation);
             } else {
-                console.log("Navigator API not available");
+                log("Navigator API not available");
             }
         }
 
@@ -37,13 +52,15 @@
             var longitude = toRadians(parseFloat(pos.coords.longitude));
             var latitude = toRadians(parseFloat(pos.coords.latitude));
 
+            log("Got location data");
+
             // write location data to console
-            console.log("longitude : " + longitude);
-            console.log("latitude : " + latitude);
+            log("longitude : " + longitude);
+            log("latitude : " + latitude);
 
             // create a new gateway connection
             gatewayConnection = new sm.client.GatewayConnection(hosts);
-
+            log("Created connection object, connecting to gateways...");
             // connect to gateways
             // once connections are established, secret share the data and run script
             gatewayConnection.openConnection(function(err, serverInfos, prngSeed) {
@@ -57,10 +74,14 @@
                     sm.prng.init(prngSeed);
                 }
 
+                log("Connection established");
+
                 // create a public float64 array of size two and insert values into it
                 var pub_value = new pub.Float64Array(2);
                 pub_value.set(0, latitude);
                 pub_value.set(1, longitude);
+
+                log("Secret sharing values");
 
                 // create a private float64 array from the public array
                 var private_value = new priv.Float64Array(pub_value);
@@ -69,9 +90,11 @@
                 // insert private value into args, the key string is used in the script to get the value
                 args["location"] = private_value;
 
+                log("Starting script");
+
                 // run script "location-database", after completion retrieve and format the result
                 gatewayConnection.runMpcComputation("location-database", args, function(err, result) {
-                    console.log("Ran script");
+                    log("Ran script");
                     var res = result["hist"]; // the result is a public array of uint64
 
                     // format the results

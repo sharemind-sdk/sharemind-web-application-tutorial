@@ -4,6 +4,7 @@ set -e
 SHAREMIND="/PATH/TO/SHAREMIND/bin"
 SCC="/PATH/TO/SHAREMIND/bin/scc"
 STDLIB="/PATH/TO/SECREC/lib"
+LD_LIBRARY_PATH="/PATH/TO/SHAREMIND/lib"
 
 if [ $# -eq 0 ]; then
     echo "No arguments given."

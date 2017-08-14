@@ -30,7 +30,7 @@ void createTable(string datasource, string table) {
     if (!tdbTableExists(datasource, table)) {
         pd_shared3p float64 nfloat64;  // used to indicate type of float64 in params
 
-        // create a vector map for the paramaters (paramater map) 
+        // create a vector map for the paramaters (paramater map)
         // a parameter map is used to create the header of a table
         uint64 params = tdbVmapNew();
 
@@ -65,9 +65,9 @@ void createTable(string datasource, string table) {
 
 // add a row to the table database
 template<domain D : shared3p>
-void storeValue(string datasource, 
-                string table, 
-                D float64 latitude, 
+void storeValue(string datasource,
+                string table,
+                D float64 latitude,
                 D float64 longitude) {
 
     uint64 params = tdbVmapNew();  // create a vector map containing the data
@@ -79,13 +79,14 @@ void storeValue(string datasource,
     tdbVmapAddValue(params, "values", longitude);
 
     tdbInsertRow(datasource, table, params);  // insert the vmap into the table database
+    tdbVmapDelete(params);
 }
 
 
 // calculate the distances as if the earth was flat, this is accurate enough for this application
 // https://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane
 template<domain D : shared3p>
-D uint[[1]] calculateDistanceHistogram(string datasource, 
+D uint[[1]] calculateDistanceHistogram(string datasource,
                                      string table,
                                      D float64 lat1,
                                      D float64 long1) {
@@ -98,7 +99,7 @@ D uint[[1]] calculateDistanceHistogram(string datasource,
     float64 R = 6371;  // Earth's mean radius in kilometers
 
     // the calculations are done on arrays so that all distances can be calculated in parallel
-    // this is more efficient then doing it in a for loop
+    // this is more efficient than doing it in a for loop
 
     // calculate the distance between the client's coordinates and all other coordinates
     pd_shared3p float64[[1]] d_lat = lat2 - lat1;
@@ -116,11 +117,11 @@ D uint[[1]] calculateDistanceHistogram(string datasource,
     c = cos(b) * d_long;
     dist = R * sqrt(a + c * c);
 
-    // store boolean arrays of comparisons 
+    // store boolean arrays of comparisons
     pd_shared3p bool[[1]] l05 = dist < 0.5;                 // distance less then 0.5 km
-    pd_shared3p bool[[1]] l1 = (dist < 1) == (dist > 0.5);  // distance less then 1.0 km
-    pd_shared3p bool[[1]] l2 = (dist < 2) == (dist > 1.0);  // distance less then 2.0 km
-    pd_shared3p bool[[1]] l5 = (dist < 5) == (dist > 2.0);  // distance less then 5.0 km
+    pd_shared3p bool[[1]] l1 = (dist < 1) & (dist > 0.5);  // distance less then 1.0 km
+    pd_shared3p bool[[1]] l2 = (dist < 2) & (dist > 1.0);  // distance less then 2.0 km
+    pd_shared3p bool[[1]] l5 = (dist < 5) & (dist > 2.0);  // distance less then 5.0 km
     pd_shared3p bool[[1]] m5 = dist > 5;                    // distance greater then 5.0 km
 
     // sum of a boolean array returns an unsigned integer
@@ -136,7 +137,7 @@ void main() {
 
     tdbOpenConnection(ds);
 
-    createTable(ds, table);  // if the table doesn't exist yet, create it 
+    createTable(ds, table);  // if the table doesn't exist yet, create it
 
     // retrieve the client's location data and store it in secret shared double precision floats
     pd_shared3p float64[[1]] location = argument("location");
