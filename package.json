@@ -16,7 +16,7 @@
     "cp:io": "cp node_modules/socket.io-client/dist/socket.io.min.js webserver/js/ext",
     "cp:jsbn": "cp node_modules/jsbn/index.js webserver/js/ext/jsbn.js",
     "cp:sm-web-client": "cp node_modules/sharemind-web-client/dist/sharemind-web-client.js webserver/js/ext",
-    "postinstall": "npm run cp:io && npm run cp:jsbn && npm run cp:sm-web-client",
+    "postinstall": "npm run cp:io && npm run cp:jsbn && npm run cp:sm-web-client"
   },
   "private": true
 }
