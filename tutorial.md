@@ -1,7 +1,5 @@
 # Sharemind Web Application Tutorial
 
-[TOC]
-
 ## Introduction
 
 Sharemind Web Gateway (SWG) and Sharemind Web Client (SWC) are Node.js modules
@@ -54,22 +52,31 @@ browser.
 
 ## Application Walkthrough
 
-To make the tutorial easier to follow, the example application is as bare bones
-as possible, containing no style sheets or animations. In addition, the code
-prioritises readability over performance or precision.  <div
-style="text-align:center"><img src ="architecture_diagram.png" /></div>
+The website queries the user's location data though the Navigator API. This
+data is then secret shared in the browser and each share is sent to a gateway.
+The website server doesn't see the original location value or the shares. After
+the computation, Sharemind Application Servers return the resulting shares to
+their gateway and the gateways relay it back to the browser. Only in the
+browser are the result shares combined to reveal the value.
+
+
+<div style="margin: auto; width: 100%; max-width: 600px; text-align: center;">
+  <img src="architecture_diagram.svg" alt="" style="width: 80%;"><br>
+  <i>1. Sharemind Web Client API secret-shares values and passes them to the Gateways.<br>
+  2. Sharemind Web Gateway API executes a SecreC program on each Sharemind Application Server.</i>
+</div>
 
 ### Gateway
 
 The gateway is a Node.js application that runs in front of a Sharemind
 Application Server. The gateway's source code can be found in the folder
 `gateway/`. A shell script runs all three instances of the gateway with the
-right configurations.  The gateway requires the public key of it's Sharemind
+right configurations. The gateway requires the public key of it's Sharemind
 server and the Sharemind server requires it's gateway's public key. The
 gateway's public key must be added to the server's access policy file and
 granted the right to execute this projects SecreC programs. For more on
 Sharemind installation and access control, read
-[here](https://docs.sharemind.cyber.ee/2018.12.1/installation/configuration).
+[here](./installation/configuration).
 For most use cases `gateway.js` should only be edited to add runnable SecreC
 programs. The variable `scriptsInfoMap` contains an object for each program that
 can be called by the web client. Only programs defined there can be run by
@@ -113,18 +120,8 @@ In the head of the HTML file, three external JavaScript modules are included:
 `socket.io`, `jsbn` and `sharemind-web-client`. Socket.io enables realtime
 communication between the web client and the gateway servers, `jsbn` adds fast
 large-number math to JavaScript and `sharemind-web-client` adds
-Sharemind-specific capabilities. The location of these modules is specified in
-`package.json`.
-```html
-<!DOCTYPE HTML>
-<html>
-<head>
-    <script src="js/ext/socket.io.min.js"></script>
-    <script src="js/ext/jsbn.js"></script>
-    <script src="js/ext/sharemind-web-client.js"></script>
-    ...
-</head>
-```
+Sharemind-specific capabilities such as secret sharing and SecreC program
+execution. The location of these modules is specified in `package.json`.
 
 The embedded JavaScript contains functions to get location data and send it to
 the servers. The script also includes variables to support secret-sharing values
@@ -207,7 +204,7 @@ pseudorandom number generator doesn't exist, it should create it. The callback
 is also where the SecreC program should be executed. The function
 `gatewayConnection.runMpcComputation(scriptName, arguments, callback(err,
 results))` runs the specified program on the Sharemind servers with the given
-arguments and calls the callback function once the it has finished. The program
+arguments and calls the callback function once it has finished. The program
 must be declared in `scriptsInfoMap` in `gateway.js`. The gateway connection is
 closed at the end of execution since the user usually only executes one program
 and leaving a connection hanging might promote errors later. The `send` button
@@ -225,7 +222,7 @@ function sendLocation(pos) {
     gatewayConnection = new sm.client.GatewayConnection(hosts);
 
     // connect to gateways
-    // once connections are established, secret share the data and run script
+    // once connections are established, secret share the data and run program
     gatewayConnection.openConnection(function(err, serverInfos, prngSeed) {
         // if an error accures
         if (err) {
@@ -248,10 +245,10 @@ function sendLocation(pos) {
         var args = {};  // object holding arguments given to the script
 
         // insert private value into args,
-        // the key string is used in the script to get the value
+        // the key string is used in the secrec program to get the value
         args["location"] = private_value;
 
-        // run script "location-database",
+        // run program "location-database",
         // after completion retrieve and format the result
         gatewayConnection.runMpcComputation("location-database",
                                             args, function(err, result) {
@@ -275,13 +272,13 @@ function sendLocation(pos) {
 
 ### SecreC program
 
-SecreC is a domain specific language for Sharemind MPC that is designed to look
-like C. The main difference between SecreC and C is that in SecreC every
-variable has a protection domain that can be either public or private. Variables
-that are private are secret shared and computations on those variables are done
-on the Sharemind servers. Detailed information about the SecreC language can be
-found in the [official
-documentation](http://sharemind-sdk.github.io/stdlib/reference/modules.html).
+The Sharemind Web Gateway can only execute SecreC programs on the application
+server. Rmind programs can't be used to build web apps. To keep private values
+secret, declassify should only be used to open values that don't leak any
+information about the input. Computation results shouldn't be declassified as
+this will reveal the value to the Sharemind hosts. Instead, results should be
+published to the client. Detailed information about the SecreC language can be
+found in the [official documentation](.api/secrec-stdlib).
 
 The SecreC program imports some modules from the SecreC Standard Library. Also,
 a privacy domain named `pd_shared3p` is declared of the kind `shared3p`. This
@@ -341,92 +338,16 @@ void main() {
 
 The `createTable()` function, which is called in the `main()` function,
 constructs a table database if one doesn't already exist. To create a table, a
-vector map (vmap) must be specified. A vector map is similar to a JavaScript
-object or a Python dictionary as it stores data in key/value pairs.
-Additionally, in SecreC the values in a vector map are vectors and therefore can
-contain more than one entry. This vmap contains the header of the table with
-information about each column. In the example application, a name and data type
-are provided, a column index can also be given. Once the table has been
-constructed, the vmap is deleted.
-```cpp
-// if it doesn't exist yet, create a table database for location data
-void createTable(string datasource, string table) {
-    if (!tdbTableExists(datasource, table)) {
-        pd_shared3p float64 nfloat64;  // used to indicate type of float64 in params
+vector map (vmap) with the column names and types is used. The function
+`storeValue()` creates a vmap of values and adds them to the table database.
+Read more about table databases and vector maps
+[here](.development/secrec-tutorial#using-the-table-database-interface).
 
-        // create a vector map for the paramaters (paramater map) 
-        // a parameter map is used to create the header of a table
-        uint64 params = tdbVmapNew();
-
-        // latitude
-        tdbVmapAddType(params, "types", nfloat64);
-        tdbVmapAddString(params, "names", "latitude");
-
-        // longitude
-        tdbVmapAddType(params, "types", nfloat64);
-        tdbVmapAddString(params, "names", "longitude");
-
-        // create the table
-        tdbTableCreate(datasource, table, params);
-
-        // the resulting table looks like this:
-        //
-        //        ---------------------------------------------
-        // names: |          "latitude" |         "longitude" |
-        // types: | pd_shared3p float64 | pd_shared3p float64 |
-        //        ---------------------------------------------
-        //  data: |    coord in radians |    coord in radians |
-        //        |                   * |                   * |
-        //        |                   * |                   * |
-        //        |                   * |                   * |
-        //        ---------------------------------------------
-
-        // clean up the parameters
-        tdbVmapDelete(params);
-    }
-}
-```
 SecreC supports C++ style
-[templates](http://sharemind-sdk.github.io/stdlib/reference/templates.html) that
+[templates](.development/secrec-reference#templates) that
 allow the creation of domain type polymorphic functions. In the example
 application, templates are used to make functions that accept inputs of any
 `shared3p` protection domain.
-```cpp
-// function that returns the square of the input
-// the input can be of any protection domain,
-// any data type and an array of any dimension
-template <domain D, type T, dim N>
-D T[[N]] square(D T[[N]] value) {
-    return value * value;
-}
-```
-
-The function `storeValue()` creates a vmap of values and adds them to the table
-database. Values must be inserted with the key `"values"`. If you wish to add
-more than one row of values, `tdbVmapAddBatch()` must be called between rows.
-Call `tdbInsertRow()` to add the vmap to the table. If every column in the table
-database has the same data type, a regular array with one element for every
-column can be used instead of a vmap.
-```cpp
-// add a row to the table database
-template<domain D : shared3p>
-void storeValue(string datasource,
-                string table,
-                D float64 latitude,
-                D float64 longitude) {
-
-    uint64 params = tdbVmapNew();  // create a vector map containing the data
-
-    // data is added in batches, one batch is one row
-    // if you add multiple rows, you need to create a new batch between rows
-    // here only one row is added, so creating a new batch is not necessary
-    tdbVmapAddValue(params, "values", latitude);
-    tdbVmapAddValue(params, "values", longitude);
-
-    tdbInsertRow(datasource, table, params);  // insert the vmap into the table database
-    tdbVmapDelete(params);
-}
-```
 
 In the function `calculateDistanceHistogram()` an
 [approximation](https://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane)
@@ -436,19 +357,19 @@ bandwith usage, calculations are done on arrays containing all the values in the
 database. The Sharemind Application Servers recieve the arrays and do the
 operations element wise.
 
-Data is read from a table columnwise. This means two private arrays are created,
-one for each column. The lenght of the table is not private and is therefore
-save in a public `uint64`. Private calculations are done on the inputs and
-database columns and the results are saved in private arrays. Comparison results
-for the histogram are stored in private boolean arrays. The function returns an
-array of type `uint64` that contains the sums of the boolean arrays. The
-returned values are also private and are reconstructed by the client.
+Data is read from a table columnwise. This means two private arrays are
+created, one for each column. The lenght of the table is not private and is
+therefore save in a public `uint64`. Calculations are done on the inputs and
+database columns in a privacy preserving manner and the results are saved in
+private arrays. Comparison results for the histogram are also stored in private
+boolean arrays. The function returns an array of type `uint64` that contains
+the sums of the boolean arrays. The returned values are secret shared aswell
+and are reconstructed by the client in the browser.
 
 Because this function declares many arrays with the same size as the database,
 it ends up allocating a lot of memory. In real life applications, where
-possible, [standard
-library](https://sharemind-sdk.github.io/stdlib/reference/index.html) functions
-should be used because of their optimised memory usage.
+possible, [standard library](.api/secrec-stdlib) functions should be used
+because of their optimised memory usage.
 ```cpp
 // calculate the distances as if the earth was flat,
 // this is accurate enough for this application
