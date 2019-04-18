@@ -76,7 +76,7 @@ server and the Sharemind server requires it's gateway's public key. The
 gateway's public key must be added to the server's access policy file and
 granted the right to execute this projects SecreC programs. For more on
 Sharemind installation and access control, read
-[here](./installation/configuration).
+[here](https://docs.sharemind.cyber.ee/2019.03/installation/configuration).
 For most use cases `gateway.js` should only be edited to add runnable SecreC
 programs. The variable `scriptsInfoMap` contains an object for each program that
 can be called by the web client. Only programs defined there can be run by
@@ -278,7 +278,7 @@ secret, declassify should only be used to open values that don't leak any
 information about the input. Computation results shouldn't be declassified as
 this will reveal the value to the Sharemind hosts. Instead, results should be
 published to the client. Detailed information about the SecreC language can be
-found in the [official documentation](.api/secrec-stdlib).
+found in the [official documentation](https://docs.sharemind.cyber.ee/2019.03/api/secrec-stdlib).
 
 The SecreC program imports some modules from the SecreC Standard Library. Also,
 a privacy domain named `pd_shared3p` is declared of the kind `shared3p`. This
@@ -341,10 +341,10 @@ constructs a table database if one doesn't already exist. To create a table, a
 vector map (vmap) with the column names and types is used. The function
 `storeValue()` creates a vmap of values and adds them to the table database.
 Read more about table databases and vector maps
-[here](.development/secrec-tutorial#using-the-table-database-interface).
+[here](https://docs.sharemind.cyber.ee/2019.03/development/secrec-tutorial#using-the-table-database-interface).
 
 SecreC supports C++ style
-[templates](.development/secrec-reference#templates) that
+[templates](./secrec-reference#templates) that
 allow the creation of domain type polymorphic functions. In the example
 application, templates are used to make functions that accept inputs of any
 `shared3p` protection domain.
@@ -352,7 +352,7 @@ application, templates are used to make functions that accept inputs of any
 In the function `calculateDistanceHistogram()` an
 [approximation](https://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane)
 is used to calculate the distance between two pairs of coordinates. To
-[optimise](.development/secrec-tutorial#writing-efficient-secrec) network
+[optimise](https://docs.sharemind.cyber.ee/2019.03/development/secrec-tutorial#writing-efficient-secrec) network
 bandwith usage, calculations are done on arrays containing all the values in the
 database. The Sharemind Application Servers recieve the arrays and do the
 operations element wise.
@@ -368,7 +368,7 @@ and are reconstructed by the client in the browser.
 
 Because this function declares many arrays with the same size as the database,
 it ends up allocating a lot of memory. In real life applications, where
-possible, [standard library](.api/secrec-stdlib) functions should be used
+possible, [standard library](https://docs.sharemind.cyber.ee/2019.03/api/secrec-stdlib) functions should be used
 because of their optimised memory usage.
 ```cpp
 // calculate the distances as if the earth was flat,
