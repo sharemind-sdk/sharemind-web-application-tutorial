@@ -323,8 +323,7 @@ void main() {
     // calculate the distance between the client's location and
     // all locations stored in the database
     // then create a histogram out of it
-    pd_shared3p uint[[1]] hist = calculateDistanceHistogram(ds, table,
-    														latitude, longitude);
+    pd_shared3p uint[[1]] hist = calculateDistanceHistogram(ds, table, latitude, longitude);
 
     // publish the histogram so that it can be retrieved by the client
     publish("hist", hist);
