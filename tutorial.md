@@ -2,13 +2,13 @@
 
 ## Introduction
 
-Sharemind Web Gateway (SWG) and Sharemind Web Client (SWC) are Node.js modules
-for building web applications that use Sharemind MPC for privacy-preserving
-computation. The SWG is used to build a gateway application that is hosted
+Sharemind Web Gateway and Sharemind Web Client are Node.js modules for building
+web applications that use Sharemind MPC for privacy-preserving computation. The
+Sharemind Web Gateway is used to build a gateway application that is hosted
 together with each Sharemind Application Server to relay data and queries
-between Sharemind and the web application. The SWC is used to secret share data
-within the browser, send the secret shared data to Sharemind and call out SecreC
-programs to handle said data.
+between Sharemind and the web application. The Sharemind Web Client is used to
+secret share data within the browser, send the secret shared data to Sharemind
+and call out SecreC programs to handle said data.
 
 This tutorial teaches how to create Sharemind web applications through a simple
 example application. In the example application, web clients send their
