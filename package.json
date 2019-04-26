@@ -4,8 +4,8 @@
   "description": "A tutorial on how to use Sharemind web client and web gateway",
   "dependencies": {
     "jsbn": "1.x.x",
-    "sharemind-web-client": "/path/to/sharemind-web-client",
-    "sharemind-web-gateway": "/path/to/sharemind-web-gateway",
+    "sharemind-web-client": "/usr/lib/nodejs/sharemind-web-gateway",
+    "sharemind-web-gateway": "/usr/lib/nodejs/sharemind-web-gateway",
     "socket.io": "1.x.x",
     "socket.io-client": "1.x.x"
   },
